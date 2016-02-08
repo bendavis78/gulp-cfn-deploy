@@ -61,7 +61,7 @@ Display all log events associated with the stack.
 
 **stackName**  
 *Required*  
-The name of the stack you want to dpeloy
+The name of the stack you want to deploy
 
 **context**  
 Default: `{}`  
