@@ -6,56 +6,23 @@
 'use strict';
 
 var AWS = require('aws-sdk');
+var chalk = require('chalk');
 var Handlebars = require('handlebars');
 var handlebars = require('gulp-compile-handlebars');
 var merge = require('gulp-merge-json');
 var through = require('through');
 var cloudFormation = new AWS.CloudFormation();
-var inq = require('inquirer');
-var chalk = require('chalk');
 var extend = require('util')._extend;
 var path = require('path');
 var gutil = require('gulp-util');
+var Console = require('./lib/console');
+
+var log = Console.log;
+var confirm = Console.confirm;
+var theme = Console.theme;
+var Table = Console.Table;
 
 var PLUGIN_NAME = 'gulp-cfn-deploy';
-
-var theme = {
-  error: chalk.red,
-  warn: chalk.yellow,
-  notice: chalk.cyan,
-  ok: chalk.green,
-  info: chalk.blue
-};
-
-function getLogger(type) {
-  return function(msg) {
-    msg = theme[type].bold('[%s]') + ' ' + msg;
-    var params = [msg, type].concat(Array.prototype.slice.call(arguments, 1));
-    var logger = type === 'warn' ? 'error' : (console[type] ? type: 'log');
-    return console[logger].apply(console, params);
-  };
-}
-
-var log = {};
-for (var k in theme) {
-  log[k] = getLogger(k);
-}
-
-function confirm(msg, cbYes, cbNo) {
-  var opts = {
-    type: 'confirm',
-    name: 'val',
-    message: msg,
-    default: false
-  };
-  return inq.prompt([opts], function(res) {
-    if (res.val) {
-      cbYes(null);
-    } else if (cbNo) {
-      cbNo(null);
-    }
-  });
-}
 
 function getStack(stackName, cb) {
   cloudFormation.listStacks({}, function(err, data) {
@@ -145,9 +112,10 @@ module.exports = function(gulp, config) {
             return new Date(a.Timestamp).getTime() - new Date(b.Timestamp).getTime();
           });
           var logTpl = Handlebars.compile(
-            '{{Timestamp}} {{ResourceStatus}} [{{ResourceType}}] {{ResourceStatusReason}}');
+            '{{Timestamp}} {{ResourceStatus}} {{ResourceType}} {{ResourceStatusReason}}');
           events.forEach(function(event) {
             event.Timestamp = new Date(event.Timestamp).toLocaleString().replace(',', '');
+            event.ResourceType = chalk.gray('[' + event.ResourceType + ']');
             var status = event.ResourceStatus;
             if (status.match(/FAILED$/)) {
               event.ResourceStatus = theme.error(status);
@@ -180,9 +148,14 @@ module.exports = function(gulp, config) {
           log.info('No resources available for ' + config.stackName);
           return;
         }
-        var tpl = Handlebars.compile(
-          '{{LogicalResourceId}} {{ResourceStatus}} [{{ResourceType}}] {{ResourceStatusReason}}');
         var resources = data.StackResourceSummaries;
+        var table = new Table({
+          'Type': 'ResourceType',
+          'Logical ID': 'LogicalResourceId',
+          'Physical ID': 'PhysicalResourceId',
+          'Status': 'ResourceStatus'
+        });
+        var rows = [];
         resources.forEach(function(resource) {
           if (!resource.LogicalResourceId) {
             resource.LogicalResourceId = '(unknown)';
@@ -199,8 +172,13 @@ module.exports = function(gulp, config) {
           } else {
             resource.ResourceStatus = theme.info(status);
           }
-          console.log(tpl(resource));
+          rows.push(resource);
         });
+        rows.sort(function(a, b) {return a.ResourceType < b.ResourceType ? -1 : 1;});
+        rows.forEach(function(row) {
+          table.push(row);
+        });
+        table.print();
       });
     });
   });

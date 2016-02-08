@@ -24,11 +24,15 @@
   "dependencies": {
     "aws-sdk": "^2.2.33",
     "chalk": "^1.1.1",
+    "cli-table": "^0.3.1",
     "gulp-compile-handlebars": "^0.6.1",
     "gulp-merge-json": "github:bendavis78/gulp-merge-json",
     "gulp-util": "^3.0.7",
     "handlebars": "^4.0.5",
     "inquirer": "^0.11.4",
     "through": "^2.3.8"
+  },
+  "devDependencies": {
+    "tty-table": "^1.0.7"
   }
 }
