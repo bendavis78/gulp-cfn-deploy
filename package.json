@@ -25,13 +25,10 @@
     "aws-sdk": "^2.2.33",
     "chalk": "^1.1.1",
     "gulp-compile-handlebars": "^0.6.1",
-    "gulp-merge-json": "^0.2.0",
+    "gulp-merge-json": "github:bendavis78/gulp-merge-json",
+    "gulp-util": "^3.0.7",
     "handlebars": "^4.0.5",
     "inquirer": "^0.11.4",
     "through": "^2.3.8"
-  },
-  "devDependencies": {
-    "mocha": "^2.4.5",
-    "mocha-jshint": "^2.3.1"
   }
 }

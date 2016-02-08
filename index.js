@@ -15,6 +15,9 @@ var inq = require('inquirer');
 var chalk = require('chalk');
 var extend = require('util')._extend;
 var path = require('path');
+var gutil = require('gulp-util');
+
+var PLUGIN_NAME = 'gulp-cfn-deploy';
 
 var theme = {
   error: chalk.red,
@@ -80,8 +83,7 @@ module.exports = function(gulp, config) {
   config = extend(defaults, config);
 
   if (!config.stackName) {
-    log.warn('stackName is missing in gulp-cfn config');
-    return;
+    throw new gutil.PluginError(PLUGIN_NAME, PLUGIN_NAME + ': stackName is missing in config');
   }
 
   gulp.task('cfn:validate', ['cfn:build'], function() {
