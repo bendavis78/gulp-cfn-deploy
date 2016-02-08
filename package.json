@@ -1,5 +1,5 @@
 {
-  "name": "gulp-cfn",
+  "name": "gulp-cfn-deploy",
   "version": "1.0.0",
   "description": "A collection of gulp tasks to help build and deploy CloudFormation stacks",
   "main": "index.js",
@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/bendavis78/gulp-cfn.git"
+    "url": "git+ssh://git@github.com/bendavis78/gulp-cfn-deploy.git"
   },
   "keywords": [
     "aws",
@@ -18,9 +18,9 @@
   "author": "Ben Davis",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/bendavis78/gulp-cfn/issues"
+    "url": "https://github.com/bendavis78/gulp-cfn-deploy/issues"
   },
-  "homepage": "https://github.com/bendavis78/gulp-cfn#readme",
+  "homepage": "https://github.com/bendavis78/gulp-cfn-deploy#readme",
   "dependencies": {
     "aws-sdk": "^2.2.33",
     "chalk": "^1.1.1",
