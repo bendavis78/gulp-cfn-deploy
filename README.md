@@ -1,4 +1,4 @@
-gulp-cfn
+gulp-cfn-deploy
 ========
 
 [CloudFormation](https://aws.amazon.com/cloudformation/) is an AWS service that
@@ -6,19 +6,20 @@ allows you to create and manage a collection of AWS resources, provisioning and
 updating them in an orderly and predictable fashion.
 
 With CloudFormation, you can create a "stack" that contain all of the resources
-necessary for your project, defined by a single JSON file. `gulp-cfn` provides
-several tasks that make it easier to manage your stack.
+necessary for your project, defined by a single JSON file. `gulp-cfn-deploy`
+provides several tasks that make it easier to manage your stack.
 
-You can define your stack's resources in separate JSON files, and `gulp-cfn`
-will merge them when you're ready to deploy or update the stack. Your resource
-files will also be passed through a [Handlebars.js](https://aws.amazon.com/)
-compiler, allowing you to use variables and helpers in your resource templates.
+You can define your stack's resources in separate JSON files, and
+`gulp-cfn-deploy` will merge them when you're ready to deploy or update the
+stack. Your resource files will also be passed through a
+[Handlebars.js](https://aws.amazon.com/) compiler, allowing you to use
+variables and helpers in your resource templates.
 
 
 ## Usage
 
 ```javacsript
-require('gulp-cfn')({
+require('gulp-cfn-deploy')({
   stackName: 'my-stack'
   context: {
     fooVar: 'foo',
