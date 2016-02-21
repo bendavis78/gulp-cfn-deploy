@@ -1,9 +1,11 @@
-/*!
+/**
  * Copyright 2016 Ben Davis
  * Released under the MIT license
  * https://github.com/bendavis78/gulp-cfn/blob/master/LICENSE
  */
 'use strict';
+
+require('stackup');
 
 var AWS = require('aws-sdk');
 var chalk = require('chalk');
@@ -212,7 +214,8 @@ module.exports = function(gulp, config) {
           };
           cloudFormation[action](params, function(err) {
             if (err) {
-              throw err;
+              log.error(err.message);
+              return; //this.emit('error', err);
             }
             var a = action === 'createStack' ? 'creation' : 'update';
             log.ok('Stack ' + a + ' in progress. Run gulp cfn:status to see current status.');
@@ -222,23 +225,63 @@ module.exports = function(gulp, config) {
   });
 
   gulp.task('cfn:delete', function() {
+    function deleteStack() {
+      cloudFormation.deleteStack({StackName: config.stackName}, function(err) {
+        if (err) {
+          throw err;
+        }
+        log.notice('Stack deletion in progress.');
+      });
+    }
+    function confirmDelete() {
+      confirm('Are you sure you want to delete the stack "' + config.stackName + '"?', deleteStack);
+    }
     return getStack(config.stackName, function(err) {
       if (err) { throw err; }
-      confirm('Are you sure you want to delete the stack "' + config.stackName + '"?', function() {
-        cloudFormation.deleteStack({StackName: config.stackName}, function(err) {
-          if (err) {
-            throw err;
-          }
-          log.notice('Stack deletion in progress.');
-        });
+      // See if there are any full S3 buckets first
+      cloudFormation.listStackResources({StackName: config.stackName}, function(err, data) {
+        if (!data) {
+          log.info('No resources available for ' + config.stackName);
+          return;
+        }
+        var resources = data.StackResourceSummaries;
+        try {
+          resources.forEach(function(resource) {
+            if (resource.ResourceType === 'AWS::S3::Bucket') {
+              // list bucket contents
+              var s3 = new AWS.S3();
+              if (!resource.PhysicalResourceId) {
+                return;
+              }
+              var params = {
+                Bucket: resource.PhysicalResourceId,
+                MaxKeys: 1
+              };
+              s3.listObjects(params, function(err, data) {
+                if (err) {
+                  if (err.code === 'NoSuchBucket') {
+                    return;
+                  }
+                  throw err;
+                }
+                if (data.Contents.length) {
+                  throw new Error('Cannot delete stack: S3 bucket %s is not empty!', theme.notice(params.Bucket));
+                }
+              });
+            }
+          });
+          confirmDelete();
+        } catch(error) {
+          log.error(error);
+        }
       });
     });
   });
 
   gulp.task('cfn:build', function() {
     var mergeOpts = extend({
-      jsonSpace: 2, 
-      fileName: config.stackName
+      jsonSpace: 2,
+      fileName: config.stackName + '.json'
     }, config.merge);
     return gulp.src(path.join(config.templateDir, '**/*.json'))
       .pipe(handlebars(config.context, config.handlebars))
