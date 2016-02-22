@@ -5,7 +5,7 @@
  */
 'use strict';
 
-require('stackup');
+//require('stackup');
 
 var AWS = require('aws-sdk');
 var chalk = require('chalk');
@@ -18,6 +18,8 @@ var extend = require('util')._extend;
 var path = require('path');
 var gutil = require('gulp-util');
 var Console = require('./lib/console');
+var pointer = require('json-pointer');
+var fs = require('fs');
 
 var log = Console.log;
 var confirm = Console.confirm;
@@ -293,5 +295,52 @@ module.exports = function(gulp, config) {
           console.error(error.stack);
         }
       });
+  });
+
+  gulp.task('cfn:update-configs', function() {
+    var cloudFormation = new AWS.CloudFormation();
+    cloudFormation.listStackResources({StackName: config.stackName}, function(err, data) {
+      if (err) {
+        log.error(err);
+        return;
+      }
+      if (!data) {
+        log.info('No resources available for ' + config.stackName);
+        return;
+      }
+      var resources = data.StackResourceSummaries;
+      function updateFile(file) {
+        var opts = extend({
+          root: '/',
+          key: function(s){return s;}
+        }, config.configs[file]);
+
+        fs.readFile(file, 'utf-8', function(err, contents) {
+          var obj, configObj = JSON.parse(contents);
+          try {
+            obj = pointer.get(configObj, opts.root);
+          } catch (error) {
+            log.error('cfn:update-configs: ' + file + ': ' + error.message);
+          }
+          if (!obj) {
+            return;
+          }
+          resources.forEach(function(resource) {
+            var key = opts.key(resource.LogicalResourceId);
+            if (typeof obj[key] !== 'undefined') {
+              obj[key] = resource.PhysicalResourceId;
+            }
+          });
+          fs.writeFileSync(file, JSON.stringify(configObj, null, 2), 'utf-8');
+          console.log('\n' + file + ':');
+          for (var key in obj) {
+            log.ok(opts.root + '/' + key + ': ' + obj[key]);
+          }
+        });
+      }
+      for (var file in config.configs) {
+        updateFile(file);
+      }
+    });
   });
 };

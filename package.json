@@ -30,6 +30,7 @@
     "gulp-util": "^3.0.7",
     "handlebars": "^4.0.5",
     "inquirer": "^0.11.4",
+    "json-pointer": "^0.3.1",
     "through": "^2.3.8"
   },
   "devDependencies": {
